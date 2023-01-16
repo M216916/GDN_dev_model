@@ -1,5 +1,5 @@
 # モデル
-### GDN_9
+### GDN_10 optuna実装
     
 # データ
 * yfinance_01
