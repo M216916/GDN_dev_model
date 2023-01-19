@@ -178,7 +178,8 @@ def fin_test(model, dataloader, config, flag):
             print('【{0}】precision:{1:4f}  recall:{2:4f}  F1:{3:4f}'.format(i,precision,recall,F1))
 
         print("=" * 50)
-        print(precision_ave/3,recall_ave/3,F1_ave/3)
+        print('macro_F1      :{0:4f}'.format(F1_ave/3))
         print("=" * 50)
 
         return avg_loss
+        #return F1_ave/3

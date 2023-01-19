@@ -118,6 +118,7 @@ class pre_GDN(nn.Module):
         device = get_device()
         edge_index = edge_index_sets[0]
         embed_dim = dim
+
         self.embedding = nn.Embedding(node_num, embed_dim)
         self.bn_outlayer_in = nn.BatchNorm1d(embed_dim)
 
@@ -128,11 +129,9 @@ class pre_GDN(nn.Module):
         self.node_embedding = None
         self.topk = topk
         self.learned_graph = None
-
         self.out_layer = OutLayer(dim*edge_set_num, node_num, out_layer_num, inter_num = out_layer_inter_dim)
         self.cache_edge_index_sets = [None] * edge_set_num
         self.cache_embed_index = None
-
         self.dp = nn.Dropout(0.2)
 
         self.init_params()
@@ -207,7 +206,7 @@ class pre_GDN(nn.Module):
 
 class fin_GDN(nn.Module):
 
-    def __init__(self, edge_index_sets, node_num, dim=64, dim_non=0, out_layer_inter_dim=256, input_dim=10, out_layer_num=1, topk=20, config={}):
+    def __init__(self, edge_index_sets, node_num, dim=64, dim_non=0, out_layer_inter_dim=256, input_dim=10, out_layer_num=1, topk=20, net_hidden_size=10, config={}):
 
         super(fin_GDN, self).__init__()
 
@@ -227,7 +226,7 @@ class fin_GDN(nn.Module):
         self.topk = topk
         self.learned_graph = None
 
-        self.net = Net(input_size=dim+dim_non)
+        self.net = Net(input_size=dim+dim_non, hidden_size=net_hidden_size)
 
         self.cache_edge_index_sets = [None] * edge_set_num
         self.cache_embed_index = None

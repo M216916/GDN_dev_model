@@ -5,6 +5,7 @@ seed=5
 BATCH_SIZE=32
 SLIDE_WIN=5
 dim=48
+net_hidden_size=15
 out_layer_num=1
 SLIDE_STRIDE=1
 topk=5
@@ -14,11 +15,11 @@ decay=0
 
 path_pattern="${DATASET}"
 COMMENT="${DATASET}"
-loss_function="Dice_loss"
+loss_function="CE_loss"
 Dice_gamma=0.2
 
-pre_EPOCH=2
-fin_EPOCH=2
+pre_EPOCH=200
+fin_EPOCH=100
 
 report='best'
 
@@ -35,6 +36,7 @@ if [[ "$gpu_n" == "cpu" ]]; then
         -random_seed $seed \
         -decay $decay \
         -dim $dim \
+        -net_hidden_size $net_hidden_size \
         -out_layer_num $out_layer_num \
         -out_layer_inter_dim $out_layer_inter_dim \
         -decay $decay \
@@ -57,6 +59,7 @@ else
         -random_seed $seed \
         -decay $decay \
         -dim $dim \
+        -net_hidden_size $net_hidden_size \
         -out_layer_num $out_layer_num \
         -out_layer_inter_dim $out_layer_inter_dim \
         -decay $decay \

@@ -35,6 +35,7 @@ import random
 import math
 import warnings
 warnings.filterwarnings('ignore')
+import optuna
 
 
 class Main():
@@ -48,7 +49,6 @@ class Main():
         dataset = self.env_config['dataset']
         train = pd.read_csv(f'./data/{dataset}/train.csv', sep=',', index_col=0)
 
-###########################################################################
         ave_span = 5
         raw_num = len(train) // ave_span
         train_ = train.iloc[:raw_num, :]
@@ -56,44 +56,13 @@ class Main():
             for j in range(train_.shape[1]):
                 train_.iloc[i,j] = train.iloc[i*ave_span:(i+1)*ave_span, j].mean()
         train = train_
-        print('***train', train.shape)
-###########################################################################
 
         x_non = pd.read_csv(f'./data/{dataset}/x_non.csv', sep=',', index_col=0)
-        x_non = x_non.apply(lambda x: (x-x.mean())/x.std(), axis=0)               #属性(columns)ごとに標準化
-#        important = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 22, 23, 25, 29, 31, 34]
-#        x_non = x_non.iloc[important,:]
-        
-        pre_train = train.iloc[    :2400 + train_config['slide_win'],:]
-        fin_train = train.iloc[2000:2400 + train_config['slide_win'],:]
-        fin_test  = train.iloc[                              2400-1:,:]
+        x_non = x_non.apply(lambda x: (x-x.mean())/x.std(), axis=0)
 
         pre_train = train.iloc[    : 450 + train_config['slide_win'],:]
         fin_train = train.iloc[ 300: 450 + train_config['slide_win'],:]
         fin_test  = train.iloc[                               450-1:,:]
-
-
-##################################################################################################
-        '''
-        # fin_test の各クラスの数を数える
-        classes = torch.zeros(fin_test.shape[0]-train_config['slide_win'], fin_test.shape[1])
-        line = 0.009
-        for i in range(classes.shape[0]):
-            for j in range(classes.shape[1]):
-                a = fin_test.iloc[i+train_config['slide_win']-1, j]
-                b = fin_test.iloc[i+train_config['slide_win'],   j]
-                rate = (b-a)/a
-                if rate >= -line:
-                    classes[i,j] = 1
-                    if rate > line:
-                        classes[i,j] = 2
-        _, class_num = torch.unique(classes, return_counts=True)
-        print(class_num[0])
-        print(class_num[1])
-        print(class_num[2])
-        '''
-##################################################################################################
-
 
         feature_map = get_feature_map(dataset)
         fc_struc = get_fc_graph_struc(dataset)
@@ -155,101 +124,9 @@ class Main():
                 input_dim=train_config['slide_win'],
                 out_layer_num=train_config['out_layer_num'],
                 out_layer_inter_dim=train_config['out_layer_inter_dim'],
-                topk=train_config['topk']).to(self.device)
-
-        if self.model_flag=='onlytime':
-            self.fin_model = fin_GDN_onlytime(edge_index_sets, len(feature_map),
-                    dim=train_config['dim'],
-                    dim_non=len(x_non),
-                    input_dim=train_config['slide_win'],
-                    out_layer_num=train_config['out_layer_num'],
-                    out_layer_inter_dim=train_config['out_layer_inter_dim'],
-                    topk=train_config['topk']).to(self.device)
-
-        if self.model_flag=='nontime':
-            self.fin_model = fin_GDN_nontime(edge_index_sets, len(feature_map),
-                    dim=train_config['dim'],
-                    dim_non=len(x_non),
-                    input_dim=train_config['slide_win'],
-                    out_layer_num=train_config['out_layer_num'],
-                    out_layer_inter_dim=train_config['out_layer_inter_dim'],
-                    topk=train_config['topk']).to(self.device)
-
-
-    def run(self):
-
-        print('■■■■■', self.model_flag, '■■■■■')
-        print('▼▼▼ Pre-training : regression')
-
-        if len(self.env_config['load_model_path']) > 0:
-            model_save_path = self.env_config['load_model_path']
-
-        else:
-            pre_model_save_path = self.pre_get_save_path()[0]   # モデル格納するpath生成
-
-            self.train_log = pre_training(self.pre_model, pre_model_save_path, 
-                config = train_config,
-                train_dataloader=self.pre_train_dataloader,
-                val_dataloader=self.pre_val_dataloader,
-                feature_map=self.feature_map,
-                test_dataloader=None,
-                test_dataset=None,
-                train_dataset=None,
-                dataset_name=self.env_config['dataset'])
-
-        pre_load_weights = torch.load(pre_model_save_path)
-        self.pre_model.load_state_dict(torch.load(pre_model_save_path))
-        best_model = self.pre_model.to(self.device)
-
-        _, self.val_result = pre_test(best_model, self.pre_val_dataloader)
-
-        self.get_figure(self.val_result)
-
-
-########################################################################################################
-        if self.model_flag=='lgb':
-            print('▼▼▼ Boosting : classifier')
-            lgb_train, lgb_val, lgb_test = embedded_out(best_model, self.fin_train_dataloader, self.fin_val_dataloader, self.fin_test_dataloader)
-            lgb_training(lgb_train, lgb_val, lgb_test)        
-
-
-        elif self.model_flag=='xgb':
-            print('▼▼▼ Boosting : classifier')
-            xgb_train, xgb_val, xgb_test = embedded_out(best_model, self.fin_train_dataloader, self.fin_val_dataloader, self.fin_test_dataloader)
-            xgb_training(xgb_train, xgb_val, xgb_test)
-
-
-        else:
-            print('▼▼▼ Fine-tuning : classifier')
-
-            fin_model_save_path = self.fin_get_save_path()[0]
-            fin_load_weights = self.fin_model.state_dict()
-            for i in list(pre_load_weights.keys())[:17]:
-                fin_load_weights[i] = pre_load_weights[i]
-            self.fin_model.load_state_dict(fin_load_weights)
-
-            # 凍結(freeze)の場合実行
-            if self.model_flag=='freeze':
-                for i in range(11):
-                    list(self.fin_model.parameters())[i].requires_grad = False
-
-            fine_tuning(self.fin_model, fin_model_save_path, 
-                    config = train_config,
-                    train_dataloader=self.fin_train_dataloader,
-                    val_dataloader=self.fin_val_dataloader,
-                    feature_map=self.feature_map,
-                    test_dataloader=None,
-                    test_dataset=None,
-                    train_dataset=None,
-                    dataset_name=self.env_config['dataset'])
-
-            self.fin_model.load_state_dict(torch.load(fin_model_save_path))
-            best_model = self.fin_model.to(self.device)
-
-            Loss = fin_test(best_model, self.fin_test_dataloader, train_config, 'test')
-            print('Loss:', Loss)
-
-
+                topk=train_config['topk'],
+                net_hidden_size=train_config['net_hidden_size']
+                ).to(self.device)
 
 
     def get_loaders(self, train_dataset, seed, batch, val_ratio=0.1):
@@ -332,8 +209,49 @@ class Main():
         return paths
 
 
+    def pre_opt_trian(self):
 
-if __name__ == "__main__":
+        pre_training(self.pre_model, self.pre_get_save_path()[0], 
+                config = self.train_config,
+                train_dataloader=self.pre_train_dataloader,
+                val_dataloader=self.pre_val_dataloader,
+                feature_map=self.feature_map,
+                test_dataloader=None,
+                test_dataset=None,
+                train_dataset=None,
+                dataset_name=self.env_config['dataset'])
+
+        pre_load_weights = torch.load(self.pre_get_save_path()[0])
+        self.pre_model.load_state_dict(torch.load(self.pre_get_save_path()[0]))
+        best_model = self.pre_model.to(self.device)
+
+        Loss, _ = pre_test(best_model, self.pre_val_dataloader)
+
+        return Loss
+
+
+    def fin_opt_trian(self):
+
+        fine_tuning(self.fin_model, self.fin_get_save_path()[0], 
+                config = self.train_config,
+                train_dataloader=self.fin_train_dataloader,
+                val_dataloader=self.fin_val_dataloader,
+                feature_map=self.feature_map,
+                test_dataloader=None,
+                test_dataset=None,
+                train_dataset=None,
+                dataset_name=self.env_config['dataset'])
+
+        self.fin_model.load_state_dict(torch.load(self.fin_get_save_path()[0]))
+        best_model = self.fin_model.to(self.device)
+
+        ave_loss = fin_test(best_model, self.fin_test_dataloader, self.train_config, 'test')
+
+        return ave_loss   # macro_F1 or ave_loss
+
+
+
+def pre_objective(trial):
 
     parser = argparse.ArgumentParser()
 
@@ -342,6 +260,7 @@ if __name__ == "__main__":
     parser.add_argument('-fin_epoch', help='train epoch', type = int, default=100)
     parser.add_argument('-slide_win', help='slide_win', type = int, default=15)
     parser.add_argument('-dim', help='dimension', type = int, default=64)
+    parser.add_argument('-net_hidden_size', help='net_hidden_size', type = int, default=10)
     parser.add_argument('-slide_stride', help='slide_stride', type = int, default=5)
     parser.add_argument('-save_path_pattern', help='save path pattern', type = str, default='')
     parser.add_argument('-dataset', help='wadi / swat', type = str, default='wadi')
@@ -360,6 +279,13 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
+    #######################################################################################################
+    args.dim = trial.suggest_int('dim', 10, 100)
+    args.slide_win = trial.suggest_int('slide_win', 3, 20)
+    args.out_layer_inter_dim = trial.suggest_int('out_layer_inter_dim', 10, 200)
+    args.pre_epoch = trial.suggest_int('pre_epoch', 10, 200)
+    #######################################################################################################
+
     random.seed(args.random_seed)
     np.random.seed(args.random_seed)
     torch.manual_seed(args.random_seed)
@@ -368,7 +294,6 @@ if __name__ == "__main__":
     torch.backends.cudnn.benchmark = False
     torch.backends.cudnn.deterministic = True
     os.environ['PYTHONHASHSEED'] = str(args.random_seed)
-
 
     train_config = {
         'batch': args.batch,
@@ -386,6 +311,7 @@ if __name__ == "__main__":
         'topk': args.topk,
         'loss_function': args.loss_function,
         'Dice_gamma': args.Dice_gamma,
+        'net_hidden_size': args.net_hidden_size,
     }
 
     env_config={
@@ -395,24 +321,110 @@ if __name__ == "__main__":
         'device': args.device,
         'load_model_path': args.load_model_path
     }
-    
 
     main = Main(train_config, env_config, debug=False, model_flag='full')
-    main.run()
+    Loss = main.pre_opt_trian()
 
-#    main = Main(train_config, env_config, debug=False, model_flag='freeze')
-#    main.run()
+    return Loss
 
-#    main = Main(train_config, env_config, debug=False, model_flag='onlytime')
-#    main.run()
 
-#    main = Main(train_config, env_config, debug=False, model_flag='nontime')
-#    main.run()
+study = optuna.create_study(direction='minimize')
+study.optimize(pre_objective, n_trials=100)
+print('*****Number of finished trials:', len(study.trials))
+print('*****Best trial               :', study.best_trial.params)
+print('*****Best value               :', study.best_value)
 
-#    main = Main(train_config, env_config, debug=False, model_flag='xgb')
-#    main.run()
+for t in study.trials:
+   print(t.params, t.value)
 
-#    main = Main(train_config, env_config, debug=False, model_flag='lgb')
-#    main.run()
 
-#     model_flag = ['full', 'freeze', 'onlytime', 'nontime', 'xgb', 'lgb']
+
+
+'''
+def fin_objective(trial):
+
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('-batch', help='batch size', type = int, default=128)
+    parser.add_argument('-pre_epoch', help='train epoch', type = int, default=100)
+    parser.add_argument('-fin_epoch', help='train epoch', type = int, default=100)
+    parser.add_argument('-slide_win', help='slide_win', type = int, default=15)
+    parser.add_argument('-dim', help='dimension', type = int, default=64)
+    parser.add_argument('-net_hidden_size', help='net_hidden_size', type = int, default=10)
+    parser.add_argument('-slide_stride', help='slide_stride', type = int, default=5)
+    parser.add_argument('-save_path_pattern', help='save path pattern', type = str, default='')
+    parser.add_argument('-dataset', help='wadi / swat', type = str, default='wadi')
+    parser.add_argument('-device', help='cuda / cpu', type = str, default='cuda')
+    parser.add_argument('-random_seed', help='random seed', type = int, default=0)
+    parser.add_argument('-comment', help='experiment comment', type = str, default='')
+    parser.add_argument('-out_layer_num', help='outlayer num', type = int, default=1)
+    parser.add_argument('-out_layer_inter_dim', help='out_layer_inter_dim', type = int, default=256)
+    parser.add_argument('-decay', help='decay', type = float, default=0)
+    parser.add_argument('-val_ratio', help='val ratio', type = float, default=0.1)
+    parser.add_argument('-topk', help='topk num', type = int, default=20)
+    parser.add_argument('-report', help='best / val', type = str, default='best')
+    parser.add_argument('-loss_function', help='loss_function', type = str, default='CE_loss')
+    parser.add_argument('-Dice_gamma', help='Dice_gamma', type = float, default=0)
+    parser.add_argument('-load_model_path', help='trained model path', type = str, default='')
+
+    args = parser.parse_args()
+
+    #######################################################################################################
+    args.dim = trial.suggest_int('dim', 10, 100)
+    args.slide_win = trial.suggest_int('slide_win', 3, 20)
+    args.net_hidden_size = trial.suggest_int('net_hidden_size', 5, 100)
+    args.fin_epoch = trial.suggest_int('fin_epoch', 10, 200)
+    #######################################################################################################
+
+    random.seed(args.random_seed)
+    np.random.seed(args.random_seed)
+    torch.manual_seed(args.random_seed)
+    torch.cuda.manual_seed(args.random_seed)
+    torch.cuda.manual_seed_all(args.random_seed)
+    torch.backends.cudnn.benchmark = False
+    torch.backends.cudnn.deterministic = True
+    os.environ['PYTHONHASHSEED'] = str(args.random_seed)
+
+    train_config = {
+        'batch': args.batch,
+        'pre_epoch': args.pre_epoch,
+        'fin_epoch': args.fin_epoch,
+        'slide_win': args.slide_win,
+        'dim': args.dim,
+        'slide_stride': args.slide_stride,
+        'comment': args.comment,
+        'seed': args.random_seed,
+        'out_layer_num': args.out_layer_num,
+        'out_layer_inter_dim': args.out_layer_inter_dim,
+        'decay': args.decay,
+        'val_ratio': args.val_ratio,
+        'topk': args.topk,
+        'loss_function': args.loss_function,
+        'Dice_gamma': args.Dice_gamma,
+        'net_hidden_size': args.net_hidden_size,
+    }
+
+    env_config={
+        'save_path': args.save_path_pattern,
+        'dataset': args.dataset,
+        'report': args.report,
+        'device': args.device,
+        'load_model_path': args.load_model_path
+    }
+
+    main = Main(train_config, env_config, debug=False, model_flag='full')
+    ave_loss = main.fin_opt_trian()
+    macro-F1 = main.fin_opt_trian()
+
+    return ave_loss    # ave_loss or macro-F1
+
+
+study = optuna.create_study(direction='minimize')   # ave_loss → minimize / macro-F1 → maximize
+study.optimize(fin_objective, n_trials=100)
+print('*****Number of finished trials:', len(study.trials))
+print('*****Best trial               :', study.best_trial.params)
+print('*****Best value               :', study.best_value)
+
+for t in study.trials:
+   print(t.params, t.value)
+'''
