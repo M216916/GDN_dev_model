@@ -49,7 +49,7 @@ class TimeDataset(Dataset):
             
             # true 生成
             true = torch.zeros(len(ft))
-            line = 0.03
+            line = 0.07                            # 0.03:だいたい3等分
             for j in range(len(ft)):
                 rate = (tar[j]-ft[j,-1])/ft[j,-1]
                 if rate >= -line:

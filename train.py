@@ -29,14 +29,16 @@ def Dice_loss(input, target, Dice_gamma):
     Dice_score = 0
 
     _, class_num = torch.unique(target, return_counts=True)
-    class_num[0] = 1006
-    class_num[1] = 4614
-    class_num[2] = 1180
+    class_num = torch.zeros(3)
+    class_num[0] = 110
+    class_num[1] = 327
+    class_num[2] = 103
 
     for i in range(input.shape[0]):
-        Dice_score = Dice_score + 1 / class_num[target[i]].to(torch.float64) * (2 * input[i, target[i]] + Dice_gamma)/(input[i, target[i]] + 1 + Dice_gamma)
+        p = torch.exp(input[i,target[i]]) / (torch.sum(torch.exp(input[i].unsqueeze(0)), 1))
+        Dice_score = Dice_score + 1/class_num[target[i]] * (2 * p + Dice_gamma)/(p + 1 + Dice_gamma)
 
-    return 1 - 1/input.shape[1] * Dice_score
+    return 1 - 1/3 * Dice_score
 
 
 def pre_training(model = None, save_path = '', config={},  train_dataloader=None, val_dataloader=None, feature_map={}, test_dataloader=None, test_dataset=None, dataset_name='swat', train_dataset=None):

@@ -250,7 +250,7 @@ class Main():
         return ave_loss   # macro_F1 or ave_loss
 
 
-
+'''
 def pre_objective(trial):
 
     parser = argparse.ArgumentParser()
@@ -336,11 +336,10 @@ print('*****Best value               :', study.best_value)
 
 for t in study.trials:
    print(t.params, t.value)
-
-
-
-
 '''
+
+
+
 def fin_objective(trial):
 
     parser = argparse.ArgumentParser()
@@ -364,16 +363,19 @@ def fin_objective(trial):
     parser.add_argument('-topk', help='topk num', type = int, default=20)
     parser.add_argument('-report', help='best / val', type = str, default='best')
     parser.add_argument('-loss_function', help='loss_function', type = str, default='CE_loss')
-    parser.add_argument('-Dice_gamma', help='Dice_gamma', type = float, default=0)
+    parser.add_argument('-Dice_gamma', help='Dice_gamma', type = float, default=0.0)
     parser.add_argument('-load_model_path', help='trained model path', type = str, default='')
 
     args = parser.parse_args()
 
     #######################################################################################################
-    args.dim = trial.suggest_int('dim', 10, 100)
-    args.slide_win = trial.suggest_int('slide_win', 3, 20)
-    args.net_hidden_size = trial.suggest_int('net_hidden_size', 5, 100)
-    args.fin_epoch = trial.suggest_int('fin_epoch', 10, 200)
+#    args.dim = trial.suggest_int('dim', 40, 80)
+#    args.slide_win = trial.suggest_int('slide_win', 10, 20)
+    args.net_hidden_size = trial.suggest_int('net_hidden_size', 82, 84)
+
+    args.Dice_gamma = trial.suggest_int('Dice_gamma', 0, 10)
+    args.Dice_gamma = args.Dice_gamma / 10
+    print('*****args.Dice_gamma', args.Dice_gamma)
     #######################################################################################################
 
     random.seed(args.random_seed)
@@ -413,18 +415,17 @@ def fin_objective(trial):
     }
 
     main = Main(train_config, env_config, debug=False, model_flag='full')
-    ave_loss = main.fin_opt_trian()
-    macro-F1 = main.fin_opt_trian()
+#    ave_loss = main.fin_opt_trian()
+    macro_F1 = main.fin_opt_trian()
 
-    return ave_loss    # ave_loss or macro-F1
+    return macro_F1    # ave_loss or macro_F1
 
 
-study = optuna.create_study(direction='minimize')   # ave_loss → minimize / macro-F1 → maximize
-study.optimize(fin_objective, n_trials=100)
+study = optuna.create_study(direction='maximize')   # ave_loss → minimize / macro_F1 → maximize
+study.optimize(fin_objective, n_trials=20)
 print('*****Number of finished trials:', len(study.trials))
 print('*****Best trial               :', study.best_trial.params)
 print('*****Best value               :', study.best_value)
 
 for t in study.trials:
    print(t.params, t.value)
-'''
