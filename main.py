@@ -49,6 +49,7 @@ class Main():
         dataset = self.env_config['dataset']
         train = pd.read_csv(f'./data/{dataset}/train.csv', sep=',', index_col=0)
 
+        # 5日次の平均をとる（時系列の長さは1/5に）
         ave_span = 5
         raw_num = len(train) // ave_span
         train_ = train.iloc[:raw_num, :]
@@ -60,6 +61,7 @@ class Main():
         x_non = pd.read_csv(f'./data/{dataset}/x_non.csv', sep=',', index_col=0)
         x_non = x_non.apply(lambda x: (x-x.mean())/x.std(), axis=0)
 
+        # データの分割範囲を指定
         pre_train = train.iloc[    : 450 + train_config['slide_win'],:]
         fin_train = train.iloc[ 300: 450 + train_config['slide_win'],:]
         fin_test  = train.iloc[                               450-1:,:]
@@ -251,6 +253,7 @@ class Main():
 
 
 '''
+# pre-training部分のパラメータ探索をする場合は活性化
 def pre_objective(trial):
 
     parser = argparse.ArgumentParser()
@@ -280,6 +283,7 @@ def pre_objective(trial):
     args = parser.parse_args()
 
     #######################################################################################################
+    #探索するパラメータの範囲指定
     args.dim = trial.suggest_int('dim', 10, 100)
     args.slide_win = trial.suggest_int('slide_win', 3, 20)
     args.out_layer_inter_dim = trial.suggest_int('out_layer_inter_dim', 10, 200)
@@ -339,7 +343,7 @@ for t in study.trials:
 '''
 
 
-
+# Fine-tuning部分のパラメータ探索をする場合は、この部分を活性化
 def fin_objective(trial):
 
     parser = argparse.ArgumentParser()
@@ -369,10 +373,12 @@ def fin_objective(trial):
     args = parser.parse_args()
 
     #######################################################################################################
+    # 探索するパラメータの範囲指定
 #    args.dim = trial.suggest_int('dim', 40, 80)
 #    args.slide_win = trial.suggest_int('slide_win', 10, 20)
     args.net_hidden_size = trial.suggest_int('net_hidden_size', 82, 84)
 
+    # Dice_lossのハイパーパラメータについては、小数第1位単位での探索をしたかったが、できなかったため以下のとおり
     args.Dice_gamma = trial.suggest_int('Dice_gamma', 0, 10)
     args.Dice_gamma = args.Dice_gamma / 10
     print('*****args.Dice_gamma', args.Dice_gamma)
@@ -415,7 +421,6 @@ def fin_objective(trial):
     }
 
     main = Main(train_config, env_config, debug=False, model_flag='full')
-#    ave_loss = main.fin_opt_trian()
     macro_F1 = main.fin_opt_trian()
 
     return macro_F1    # ave_loss or macro_F1

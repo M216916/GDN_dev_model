@@ -15,11 +15,11 @@ decay=0
 
 path_pattern="${DATASET}"
 COMMENT="${DATASET}"
-loss_function="Dice_loss"
+loss_function="Dice_loss"  # Dice_loss / CE_loss
 Dice_gamma=0.2
 
 pre_EPOCH=2
-fin_EPOCH=100
+fin_EPOCH=2
 
 report='best'
 
