@@ -4,41 +4,75 @@
 
 # 環境
 * conda info
+
      active environment : test
+
     active env location : /home/inaba/anaconda3/envs/test
+
             shell level : 2
+
        user config file : /home/inaba/.condarc
+
  populated config files : 
+
           conda version : 4.12.0
+
     conda-build version : 3.21.8
+
          python version : 3.9.12.final.0
+
        virtual packages : __cuda=10.0=0
+
                           __linux=4.4.0=0
+
                           __glibc=2.23=0
+
                           __unix=0=0
+
                           __archspec=1=x86_64
+
        base environment : /home/inaba/anaconda3  (writable)
+
       conda av data dir : /home/inaba/anaconda3/etc/conda
+
   conda av metadata url : None
+
            channel URLs : https://repo.anaconda.com/pkgs/main/linux-64
+
                           https://repo.anaconda.com/pkgs/main/noarch
+
                           https://repo.anaconda.com/pkgs/r/linux-64
+
                           https://repo.anaconda.com/pkgs/r/noarch
+
           package cache : /home/inaba/anaconda3/pkgs
+
                           /home/inaba/.conda/pkgs
+
        envs directories : /home/inaba/anaconda3/envs
+
                           /home/inaba/.conda/envs
+
                platform : linux-64
+
              user-agent : conda/4.12.0 requests/2.27.1 CPython/3.9.12 Linux/4.4.0-210-generic ubuntu/16.04.7 glibc/2.23
+
                 UID:GID : 1040:1040
+
              netrc file : None
+
            offline mode : False
 
 * conda list
+
 Name                      Version                   Build  Channel
+
 _libgcc_mutex             0.1                        main  
+
 _openmp_mutex             5.1                       1_gnu  
+
 _py-xgboost-mutex         2.0                       cpu_0  
+
 absl-py                   1.3.0                    pypi_0    pypi
 alembic                   1.4.1                      py_0    conda-forge/label/cf202003
 ase                       3.22.1                   pypi_0    pypi
