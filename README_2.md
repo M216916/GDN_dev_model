@@ -1,7 +1,3 @@
-# モデル
-### GDN_10 optuna実装
-    
-
 # 環境
 * conda info
 
@@ -321,39 +317,3 @@ yaml                      0.2.2                h516909a_1    conda-forge/label/c
 zlib                      1.2.13               h5eee18b_0  
 
 zstd                      1.5.2                ha4553b6_0  
-
-
-# データ
-* yfinance_01_10
-
-        時系列属性：2730社 * 日次データ（2614日）
-
-        非時系列属性：40カラム（財務指標14+属性26／標準化あり）
-
-        10社分のデータ（主に動作を確認するために使用）
-
-* yfinance_01_100
-
-        100社分のデータ（実験用のデータ）
-
-* yfinance_01_all
-
-        すべて（2730社分）のデータ（本当はこれで実験したかった）
-
-
-# 調整事項
-
-* main.py
-
-        データの分割を指定
-
-        時系列属性の平均化（圧縮）の調整
-
-        Pre-training／Fine-tuningどちらのハイパーパラメータの調整をするか指定
-
-
-* run.sh
-
-        loss_functionの選択（CE_loss / Dice_loss）
-
-        エポック数の調整（pre_EPOCH / fin_EPOCH）
