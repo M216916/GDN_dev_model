@@ -1,12 +1,14 @@
 # モデル
-### GDN_10 optuna実装
+### GDN_dev_optuna optuna実装
 
 
 # 概要
 
-* GDN_10では、optuna（ベイズ最適化）を用いて、ハイパーパラメータの最適化を行う
+* optuna（ベイズ最適化）を用いて、ハイパーパラメータの最適化を行う
 
-* 本番用の実験ではない
+* ハイパーパラメータの最適化を行う際には、学習用データのみで実行する
+
+* テストは GDN_dev_test で実装
     
 
 # 環境
@@ -28,7 +30,7 @@
 
 * yfinance_01_all
 
-        すべて（2730社分）のデータ（本当はこれで実験したかった）
+        すべて（2730社分）のデータ（本当はこれで実験したかったが時間がかかるため断念）
 
 
 # 調整事項
@@ -44,9 +46,9 @@
 
 * run.sh
 
-        loss_functionの選択（CE_loss / Dice_loss）
+        loss_functionの選択（CE_loss or Dice_loss）
 
-        エポック数の調整（pre_EPOCH / fin_EPOCH）
+        エポック数の調整（pre_EPOCH and fin_EPOCH）
 
 
 # 実行方法
