@@ -8,7 +8,7 @@
 
 * ハイパーパラメータの最適化を行う際には、学習用データのみで実行する
 
-* テストは GDN_dev_test1（ https://github.com/M216916/GDN_dev_test1 ） で実装
+* テストは GDN_dev_test（ https://github.com/M216916/GDN_dev_test ） で実装
     
 
 # 環境
