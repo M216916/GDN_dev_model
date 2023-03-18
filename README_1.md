@@ -1,5 +1,5 @@
 # モデル
-### GDN_dev_optuna optuna実装
+### GDN_dev_optuna （optuna実装）
 
 
 # 概要
@@ -8,7 +8,7 @@
 
 * ハイパーパラメータの最適化を行う際には、学習用データのみで実行する
 
-* テストは GDN_dev_test（ https://github.com/M216916/GDN_dev_test ） で実装
+* テストは GDN_dev_test1（ https://github.com/M216916/GDN_dev_test1 ） で実装
     
 
 # 環境
@@ -57,13 +57,15 @@
 
 * GitHub から gitclone
 
-        （例）git clone -b GDN_10 https://github.com/M216916/GDN.git GDN_10
+        （例）git clone https://github.com/M216916/GDN_dev_optuna.git
 
-* GDN_10 のディレクトリに入る
+* GDN_dev_optuna のディレクトリに入る
 
 * cpu で実行
 
-        （例）@prmir11:~/GDN_10$ bash run.sh cpu yfinance_01_100
+        （例）@prmir11:~/GDN_dev_optuna$ bash run.sh cpu yfinance_01_100
+
+        （実行したいデータを指定）
 
         （GPUでも実行できるらしいが、環境設定が分からず断念）
 
